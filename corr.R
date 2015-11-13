@@ -14,42 +14,44 @@ corr <- function(directory, threshold = 0) {
   
   ## Check to make sure the correct directory is entered
   ## If the directory can not be found, exit gracefully
-  if(!dir.exists(directory))
-  {
-    return('The directory/folder entered is incorrect')
-  }
   
-  ## Load the names of the data files found in the specified directory
-  all_data_files <- list.files(directory, full.names=T)   #creates a list of files names
+  crs <- vector(mode='numeric')
 
-  ##
-  ## Create a list of data file names that meet the threshhold requirements
-  ##
-  df <- data.frame(matrix(nrow=length(all_data_files),ncol=3))
-  colnames(df) <- c('id','nobs', 'c')
-  
-  crs <- vector()
-  for (i in 1:length(all_data_files)) {
-    import_data <- read.csv(all_data_files[i]) # read the data
-    cleaned_data <- import_data[complete.cases(import_data),]
-    if (nrow(cleaned_data)>threshold){
-      cr <- cor(cleaned_data[,2],cleaned_data[,3])
-      crs <- append(crs,cr)
+  if(!dir.exists(directory) || (threshold < 0) || !is.numeric(threshold))
+  {
+    if(!dir.exists(directory)) {
+      print('The directory/folder entered is incorrect')
     }
-    ##
-    ## Since the names of the data files, are monitor IDs, and they are of a standard format,
-    ## I parsed out the ID# from the the pathname
-    ##
-    #df[i,1] <- as.integer(substr(all_data_files[i], nchar(all_data_files[i])-6, nchar(all_data_files[i])-4))
-    #df[i,2] <- nrow(cleaned)
-    
-    #x <- (cleaned[,2]) # sulfate data
-    #y <- (cleaned[,3]) # nitrate data
-    #z <- cor(x,y)
-    #df[i,3] <- z
-    
-  }
+    if((threshold < 0) || !is.numeric(threshold)) {
+      print('Threshold must be a value greater than or equal to 0 (threshold >= 0).')
+    }
+
+    return()
+  } else {
   
+    ## Load the names of the data files found in the specified directory
+    all_data_files <- list.files(directory, full.names=T)   #creates a list of files names
+  
+    ##
+    ## Create a list of data file names that meet the threshhold requirements
+    ##
+    df <- data.frame(matrix(nrow=length(all_data_files),ncol=3))
+    colnames(df) <- c('id','nobs', 'c')
+    
+    for (i in 1:length(all_data_files)) {
+      import_data <- read.csv(all_data_files[i]) # read the data
+      cleaned_data <- import_data[complete.cases(import_data),] # remove the rows that have NA's
+      
+      ##
+      ## count the number of rows left, if it is greater than the threshold,
+      ## calculate the correlation value
+      ##
+      if (nrow(cleaned_data)>threshold){ 
+        cr <- cor(cleaned_data[,2],cleaned_data[,3])
+        crs <- append(crs,cr) # add the correlation value to the vector of correlation values
+      }
+    }
+  }
   crs
   
 }
